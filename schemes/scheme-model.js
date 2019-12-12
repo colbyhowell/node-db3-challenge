@@ -1,25 +1,47 @@
 const db = require('../data/db-config')
 
+// function find() {
+//     return db('schemes')
+// }
+
 function find() {
     return db('schemes')
+        .then(schemes => {
+            return db('steps')
+                .then(steps => {
+                    return schemes.map(scheme => {
+                        const schemeSteps = []
+                        steps.map(step => {
+                            if (scheme.id === step.scheme_id) {
+                                schemeSteps.push(step)
+                            }
+                        })
+                        scheme.steps = schemeSteps
+                        return scheme
+                    })
+                })
+        })
 }
+
 
 // function findById(id) {
 //     return db('schemes').where({ id })
 // }
 
 function findById(id) {
-    return db('schemes as sc')
-        .join('steps as st', 'st.scheme_id', 'sc.id')
-        .options({ nestTables: true })
-        .where({ scheme_id: id })
+    return db('schemes')
+        .where({ id }).first()
         .then(res => {
-            return {
-                step: res.values(step_number),
-                instruction: res.values(instructions)
-            }
+            return db('steps')
+                .where({ scheme_id: id })
+                .orderBy('step_number')
+                .then(steps => {
+                    res.colby = steps
+                    return res
+                })
         })
 }
+
 
 function findSteps(id) {
     return db('steps as st')
